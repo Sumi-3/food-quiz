@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FFDEE9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>えいようクイズ - 五大栄養素を学ぼう</title>
+  <meta name="description" content="食べ物の写真を撮って、五大栄養素について楽しく学べる小学生向けの知育アプリです。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ==================== スタート画面 ==================== -->
+    <section id="start-screen" class="active">
+      <div class="title-container">
+        <div class="title-emoji">🍎</div>
+        <h1>えいようクイズ</h1>
+        <p class="subtitle">食べ物の写真をとって、<br>五大栄養素を学ぼう！</p>
+      </div>
+
+      <div class="emoji-bounce-container">
+        <span class="emoji-bounce" style="animation-delay: 0s;">🍚</span>
+        <span class="emoji-bounce" style="animation-delay: 0.3s;">🥩</span>
+        <span class="emoji-bounce" style="animation-delay: 0.6s;">🥦</span>
+        <span class="emoji-bounce" style="animation-delay: 0.9s;">🥛</span>
+        <span class="emoji-bounce" style="animation-delay: 1.2s;">🧈</span>
+      </div>
+
+      <div class="group-info">
+        <div class="group-card energy">
+          <div class="group-icon">🍚</div>
+          <div class="group-name">エネルギーの<br>もとになる</div>
+          <div class="group-sub">きいろ</div>
+        </div>
+        <div class="group-card body">
+          <div class="group-icon">🥩</div>
+          <div class="group-name">体をつくる<br>もとになる</div>
+          <div class="group-sub">あか・ピンク</div>
+        </div>
+        <div class="group-card condition">
+          <div class="group-icon">🥦</div>
+          <div class="group-name">体の調子を<br>ととのえる</div>
+          <div class="group-sub">みどり</div>
+        </div>
+      </div>
+
+      <div class="start-buttons">
+        <button id="btn-camera" class="btn btn-primary">📸 写真をとる</button>
+        <button id="btn-sample" class="btn btn-secondary">🎮 サンプルであそぶ</button>
+      </div>
+    </section>
+
+    <!-- ==================== カメラ画面 ==================== -->
+    <section id="camera-screen">
+      <div class="camera-view">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <img id="captured-preview" style="display:none;" alt="撮影した写真">
+        <div class="camera-guide">
+          <div class="camera-guide-frame"></div>
+          <p class="camera-guide-text">食べ物をまん中にうつしてね</p>
+        </div>
+      </div>
+      <div id="back-btn" class="back-btn">← もどる</div>
+      <div class="camera-controls">
+        <div id="shutter-btn" class="shutter-btn">
+          <div class="shutter-btn-inner"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ローディング画面 ==================== -->
+    <section id="loading-screen">
+      <div class="loading-content">
+        <div id="loading-emojis" class="loading-emojis">
+          <span>🔍</span><span>🍙</span><span>✨</span>
+        </div>
+        <h2 class="loading-title">AIが食べ物を<br>分析しています...</h2>
+        <div class="loading-bar">
+          <div class="loading-bar-fill"></div>
+        </div>
+        <p class="loading-sub">ちょっとまってね！</p>
+      </div>
+    </section>
+
+    <!-- ==================== ゲーム画面 ==================== -->
+    <section id="game-screen">
+      <div class="game-header">
+        <div id="score-board" class="score-board">⭐ スコア: 0点</div>
+        <div class="game-instruction">食べ物を正しい場所にドラッグしよう！</div>
+      </div>
+
+      <!-- 食材カード（JSで動的生成） -->
+      <div id="food-cards-container"></div>
+
+      <!-- ヒント表示エリア -->
+      <div id="hint-display" class="hint-display"></div>
+
+      <!-- 五大栄養素チャート -->
+      <div id="nutrient-chart">
+        <!-- 黄色エリア - エネルギーになる食品 -->
+        <div class="chart-area chart-energy">
+          <div class="chart-group-label label-energy">
+            <span>主にエネルギーの<br>もとになる食品</span>
+          </div>
+          <div id="zone-2" class="drop-zone zone-fat" data-category="2">
+            <span class="zone-number">②</span>
+            <span class="zone-label">脂質<br><small>あぶら・バターなど</small></span>
+            <div class="zone-placed-items"></div>
+          </div>
+          <div id="zone-1" class="drop-zone zone-carb" data-category="1">
+            <span class="zone-number">①</span>
+            <span class="zone-label">炭水化物<br><small>ごはん・パンなど</small></span>
+            <div class="zone-placed-items"></div>
+          </div>
+        </div>
+
+        <!-- ピンクエリア - 体をつくる食品 -->
+        <div class="chart-area chart-body">
+          <div class="chart-group-label label-body">
+            <span>主に体をつくる<br>もとになる食品</span>
+          </div>
+          <div id="zone-3" class="drop-zone zone-protein" data-category="3">
+            <span class="zone-number">③</span>
+            <span class="zone-label">たんぱく質<br><small>肉・魚・卵・豆</small></span>
+            <div class="zone-placed-items"></div>
+          </div>
+          <div id="zone-4" class="drop-zone zone-mineral" data-category="4">
+            <span class="zone-number">④</span>
+            <span class="zone-label">無機質<br><small>牛乳・海そうなど</small></span>
+            <div class="zone-placed-items"></div>
+          </div>
+        </div>
+
+        <!-- 緑エリア - 体の調子を整える食品 -->
+        <div class="chart-area chart-condition">
+          <div class="chart-group-label label-condition">
+            <span>主に体の調子を整えるもとになる食品</span>
+          </div>
+          <div id="zone-6" class="drop-zone zone-vitamin-other" data-category="6">
+            <span class="zone-number">⑥</span>
+            <span class="zone-label">その他の野菜<br>きのこ・果物</span>
+            <div class="zone-placed-items"></div>
+          </div>
+          <div id="zone-5" class="drop-zone zone-vitamin-color" data-category="5">
+            <span class="zone-number">⑤</span>
+            <span class="zone-label">色のこい野菜<br><small>緑黄色野菜</small></span>
+            <div class="zone-placed-items"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 結果画面 ==================== -->
+    <section id="results-screen">
+      <!-- game.js の showResults() で動的に生成 -->
+    </section>
+
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

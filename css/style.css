@@ -1,0 +1,854 @@
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap');
+
+/* ========== CSS変数 ========== */
+:root {
+  --energy-light: #FFF9C4;
+  --energy-main: #FFD54F;
+  --energy-dark: #FF8F00;
+
+  --body-light: #FCE4EC;
+  --body-main: #F48FB1;
+  --body-dark: #E91E63;
+
+  --condition-light: #E8F5E9;
+  --condition-main: #66BB6A;
+  --condition-dark: #2E7D32;
+
+  --text-main: #333;
+  --text-light: #666;
+  --bg-gradient: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+  --white-glass: rgba(255, 255, 255, 0.85);
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ========== リセット ========== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', sans-serif;
+  color: var(--text-main);
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========== アプリコンテナ ========== */
+#app {
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ========== 画面共通 ========== */
+section {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+section.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* ========== アニメーション ========== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0.5); }
+  70% { box-shadow: 0 0 0 15px rgba(255, 143, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 50%, 90% { transform: translateX(-6px); }
+  30%, 70% { transform: translateX(6px); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
+}
+
+@keyframes cardAppear {
+  from { transform: scale(0) rotate(-20deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes loadingBar {
+  0% { width: 5%; }
+  50% { width: 70%; }
+  90% { width: 90%; }
+  100% { width: 95%; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: inset 0 0 8px rgba(255,255,255,0.3); }
+  50% { box-shadow: inset 0 0 20px rgba(255,255,255,0.6); }
+}
+
+/* ========== ボタン ========== */
+.btn {
+  border: none;
+  border-radius: 50px;
+  padding: 16px 32px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  max-width: 300px;
+  margin: 6px auto;
+  display: block;
+  text-align: center;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 200%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::after { left: 100%; }
+
+.btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--energy-main), var(--energy-dark));
+  color: white;
+  animation: pulse 2.5s infinite;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, var(--condition-main), var(--condition-dark));
+  color: white;
+}
+
+.btn-tertiary {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-main);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* ========== スタート画面 ========== */
+#start-screen {
+  justify-content: center;
+  gap: 8px;
+}
+
+.title-container {
+  text-align: center;
+  animation: slideUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.title-emoji {
+  font-size: 4rem;
+  animation: float 3s ease-in-out infinite;
+  margin-bottom: 4px;
+}
+
+h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--body-dark), var(--energy-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* 弾むエモジ */
+.emoji-bounce-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.emoji-bounce {
+  font-size: 2rem;
+  display: inline-block;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* 3色グループカード */
+.group-info {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin: 12px 0;
+  animation: fadeIn 1s ease 0.3s both;
+}
+
+.group-card {
+  background: var(--white-glass);
+  backdrop-filter: blur(10px);
+  padding: 12px 8px;
+  border-radius: 16px;
+  text-align: center;
+  flex: 1;
+  max-width: 110px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s;
+}
+
+.group-card:active { transform: scale(0.95); }
+
+.group-card.energy { border-top: 4px solid var(--energy-main); }
+.group-card.body { border-top: 4px solid var(--body-main); }
+.group-card.condition { border-top: 4px solid var(--condition-main); }
+
+.group-icon { font-size: 1.8rem; margin-bottom: 4px; }
+.group-name { font-size: 0.7rem; font-weight: 700; line-height: 1.3; }
+.group-sub { font-size: 0.6rem; color: var(--text-light); margin-top: 4px; }
+
+.start-buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* ========== カメラ画面 ========== */
+#camera-screen {
+  padding: 0 !important;
+  background: #000;
+}
+
+.camera-view {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+
+.camera-view video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-view #captured-preview {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.camera-guide {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.camera-guide-frame {
+  width: 220px;
+  height: 220px;
+  border: 3px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+}
+
+.camera-guide-text {
+  color: white;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.back-btn {
+  position: absolute;
+  top: calc(16px + var(--safe-top));
+  left: 16px;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: calc(30px + var(--safe-bottom));
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.shutter-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 4px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+
+.shutter-btn:active { transform: scale(0.9); }
+
+.shutter-btn-inner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  transition: background 0.15s;
+}
+
+.shutter-btn:active .shutter-btn-inner {
+  background: #ddd;
+}
+
+/* ========== ローディング画面 ========== */
+#loading-screen {
+  justify-content: center;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-emojis {
+  font-size: 3rem;
+  margin-bottom: 24px;
+}
+
+.loading-emojis span {
+  display: inline-block;
+  animation: bounce 1.2s ease-in-out infinite;
+  margin: 0 6px;
+}
+
+.loading-emojis span:nth-child(2) { animation-delay: 0.15s; }
+.loading-emojis span:nth-child(3) { animation-delay: 0.3s; }
+
+.loading-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.loading-bar {
+  width: 200px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--energy-main), var(--body-main), var(--condition-main));
+  border-radius: 4px;
+  animation: loadingBar 4s ease-in-out infinite;
+}
+
+.loading-sub {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+/* ========== ゲーム画面 ========== */
+#game-screen {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  gap: 6px;
+}
+
+.game-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.score-board {
+  background: var(--white-glass);
+  backdrop-filter: blur(10px);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  box-shadow: var(--card-shadow);
+  white-space: nowrap;
+}
+
+.game-instruction {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-align: right;
+  flex-shrink: 1;
+}
+
+/* 食材カードコンテナ */
+#food-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 4px;
+  min-height: 56px;
+  width: 100%;
+}
+
+/* 食材カード */
+.food-card {
+  width: 64px;
+  height: 74px;
+  border-radius: 16px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  cursor: grab;
+  flex-shrink: 0;
+  animation: cardAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  position: relative;
+  touch-action: none;
+}
+
+.food-card.dragging {
+  cursor: grabbing;
+  opacity: 0.95;
+}
+
+.food-card.placed {
+  width: 44px;
+  height: 52px;
+  cursor: default;
+  opacity: 0.9;
+  margin: 2px;
+}
+
+.food-card.placed .food-emoji { font-size: 1.2rem; }
+.food-card.placed .food-name { font-size: 0.45rem; }
+
+.food-card.error {
+  animation: shake 0.4s ease-in-out;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.3) !important;
+}
+
+.food-card-placeholder {
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.food-emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.food-name {
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-top: 2px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.check-mark {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  background: var(--condition-main);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ヒント表示 */
+.hint-display {
+  position: fixed;
+  bottom: calc(60px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  z-index: 500;
+  max-width: 90%;
+  text-align: center;
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.hint-display.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ========== 栄養素チャート ========== */
+#nutrient-chart {
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* チャートエリア */
+.chart-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-energy {
+  grid-column: 1;
+  grid-row: 1;
+  background: linear-gradient(135deg, var(--energy-light), #FFF3B0);
+  border-right: 2px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.chart-body {
+  grid-column: 2;
+  grid-row: 1;
+  background: linear-gradient(135deg, #FFE0EB, var(--body-light));
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.chart-condition {
+  grid-column: 1 / 3;
+  grid-row: 2;
+  background: linear-gradient(135deg, var(--condition-light), #C8E6C9);
+  flex-direction: row;
+}
+
+/* ドロップゾーン */
+.drop-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 4px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  min-height: 0;
+}
+
+.zone-fat {
+  border-bottom: 2px dashed rgba(255, 143, 0, 0.25);
+}
+
+.zone-protein {
+  border-bottom: 2px dashed rgba(233, 30, 99, 0.25);
+}
+
+.zone-vitamin-other {
+  border-right: 2px dashed rgba(46, 125, 50, 0.25);
+}
+
+/* ドロップゾーン ホバー */
+.drop-zone.hover-active {
+  background: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.7);
+  animation: glowPulse 0.8s ease-in-out infinite;
+}
+
+.zone-number {
+  font-size: 1.5rem;
+  font-weight: 900;
+  opacity: 0.2;
+  line-height: 1;
+}
+
+.zone-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.zone-label small {
+  font-size: 0.55rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* 配置済みアイテムのエリア */
+.zone-placed-items {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+/* チャートグループラベル */
+.chart-group-label {
+  position: absolute;
+  z-index: 5;
+  font-size: 0.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 3px 6px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.label-energy {
+  top: 4px; left: 4px;
+  color: var(--energy-dark);
+  background: rgba(255, 249, 196, 0.8);
+}
+
+.label-body {
+  top: 4px; right: 4px;
+  color: var(--body-dark);
+  background: rgba(252, 228, 236, 0.8);
+  text-align: right;
+}
+
+.label-condition {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--condition-dark);
+  background: rgba(232, 245, 233, 0.8);
+  white-space: nowrap;
+}
+
+/* ========== 結果画面 ========== */
+#results-screen {
+  justify-content: flex-start;
+  padding-top: calc(30px + var(--safe-top)) !important;
+}
+
+.results-container {
+  width: 100%;
+  max-width: 380px;
+}
+
+.results-header {
+  text-align: center;
+  margin-bottom: 20px;
+  animation: slideUp 0.6s ease-out;
+}
+
+.results-emoji {
+  font-size: 4rem;
+  animation: bounce 1s ease;
+}
+
+.results-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 8px 0;
+}
+
+.results-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: linear-gradient(135deg, var(--energy-main), var(--energy-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.score-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-unit {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.results-items {
+  margin-bottom: 20px;
+}
+
+.results-items h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--white-glass);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--card-shadow);
+  animation: slideUp 0.4s ease-out both;
+}
+
+.result-item:nth-child(2) { animation-delay: 0.05s; }
+.result-item:nth-child(3) { animation-delay: 0.1s; }
+.result-item:nth-child(4) { animation-delay: 0.15s; }
+.result-item:nth-child(5) { animation-delay: 0.2s; }
+.result-item:nth-child(6) { animation-delay: 0.25s; }
+.result-item:nth-child(7) { animation-delay: 0.3s; }
+.result-item:nth-child(8) { animation-delay: 0.35s; }
+
+.result-item-emoji {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.result-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-item-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.result-stars {
+  font-size: 0.75rem;
+}
+
+.result-item-zone {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.result-item-fact {
+  font-size: 0.7rem;
+  color: var(--condition-dark);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.results-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  padding-bottom: 20px;
+}
+
+/* ========== レスポンシブ ========== */
+@media (max-width: 360px) {
+  h1 { font-size: 2.2rem; }
+  .food-card { width: 56px; height: 66px; }
+  .food-emoji { font-size: 1.4rem; }
+  .food-name { font-size: 0.5rem; }
+  .zone-number { font-size: 1.2rem; }
+  .zone-label { font-size: 0.6rem; }
+  .chart-group-label { font-size: 0.45rem; }
+}
+
+@media (min-width: 500px) {
+  .food-card { width: 72px; height: 82px; }
+  .food-emoji { font-size: 1.8rem; }
+  #nutrient-chart { max-width: 420px; margin: 0 auto; }
+}
+
+/* ========== スパークル（game.jsから生成） ========== */
+.sparkle-particle {
+  pointer-events: none;
+}
