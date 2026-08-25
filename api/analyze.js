@@ -10,6 +10,9 @@ export const config = {
   runtime: 'edge',
 };
 
+// モデルが廃止されたら環境変数 GEMINI_MODEL で差し替えられるようにしておく
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BASE64_LENGTH = 5_000_000; // Base64で約5MB（実画像で約3.7MB）まで
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -160,7 +163,7 @@ export default async function handler(req) {
     return json({ error: 'Image is too large' }, 413);
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
   const requestBody = {
     contents: [
       {
