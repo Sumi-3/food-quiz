@@ -6,7 +6,7 @@
 import { Camera } from './camera.js';
 import { analyzeFood } from './gemini.js';
 import { initGame, getScore, showResults, resetGame } from './game.js';
-import { NUTRIENT_CATEGORIES } from './nutrients.js';
+import { classifyFood } from './nutrients.js';
 
 // ========== 画面遷移 ==========
 
@@ -31,12 +31,20 @@ window.showScreen = showScreen;
 
 let camera = null;
 let capturedImage = null; // { base64, blob, mimeType }
+let lastFoodItems = null; // 直近のゲームで使った食材（リトライ用）
 
 /**
  * カメラ画面を開いてカメラを起動
  */
 async function openCamera() {
   showScreen('camera-screen');
+
+  // 前回撮影したプレビューが残っているとライブ映像を覆ってしまう
+  const preview = document.getElementById('captured-preview');
+  if (preview) {
+    preview.style.display = 'none';
+    preview.removeAttribute('src');
+  }
 
   const videoEl = document.getElementById('camera-video');
   if (!videoEl) return;
@@ -106,25 +114,45 @@ async function startAnalysis(base64Image, mimeType) {
       return;
     }
 
-    // fun_fact を funFact に変換（API応答のスネークケース→キャメルケース）
-    const normalizedItems = foodItems.map(item => ({
-      name: item.name,
-      category: item.category,
-      emoji: item.emoji,
-      funFact: item.fun_fact || item.funFact || `${item.name}は栄養たっぷり！`
-    }));
+    const normalizedItems = normalizeFoodItems(foodItems);
+
+    if (normalizedItems.length === 0) {
+      alert('食べ物が見つかりませんでした。\nもう一度撮影してみてください。');
+      showScreen('start-screen');
+      return;
+    }
 
     startGame(normalizedItems);
   } catch (err) {
     console.error('解析エラー:', err);
-
-    if (err.message.includes('APIキーが設定されていません')) {
-      alert('APIキーが設定されていません。\njs/config.js を開いて、GEMINI_API_KEY にキーを貼り付けてください。');
-    } else {
-      alert('解析に失敗しました。サンプルデータで遊びましょう！');
-      startGame(getSampleFoodItems());
-    }
+    alert('解析に失敗しました。サンプルデータで遊びましょう！');
+    startGame(getSampleFoodItems());
   }
+}
+
+/**
+ * API応答をゲームが扱える形に整える
+ * - fun_fact（スネークケース）→ funFact
+ * - category が 1〜6 でなければ食材名から推測し、それも無理なら除外する
+ */
+function normalizeFoodItems(foodItems) {
+  return foodItems.reduce((acc, item) => {
+    if (!item || typeof item.name !== 'string') return acc;
+
+    let category = Number(item.category);
+    if (!Number.isInteger(category) || category < 1 || category > 6) {
+      category = classifyFood(item.name);
+    }
+    if (!category) return acc;
+
+    acc.push({
+      name: item.name,
+      category,
+      emoji: item.emoji || '🍽️',
+      funFact: item.fun_fact || item.funFact || `${item.name}は栄養たっぷり！`
+    });
+    return acc;
+  }, []);
 }
 
 // ========== サンプルデータ ==========
@@ -151,6 +179,7 @@ function getSampleFoodItems() {
  * ゲームを開始する
  */
 function startGame(foodItems) {
+  lastFoodItems = foodItems;
   showScreen('game-screen');
   resetGame();
   initGame(foodItems);
@@ -171,9 +200,15 @@ function updateScoreDisplay(score) {
  * ゲーム終了 → 結果画面へ遷移
  */
 function goToResults() {
-  const score = getScore();
   showScreen('results-screen');
   showResults();
+}
+
+/**
+ * 直前と同じ食材でもう一度あそぶ（撮影した食材を捨てない）
+ */
+function replayGame() {
+  startGame(lastFoodItems && lastFoodItems.length > 0 ? lastFoodItems : getSampleFoodItems());
 }
 
 // ========== ローディングアニメーション ==========
@@ -233,27 +268,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backBtn.addEventListener('click', closeCamera);
   }
 
-  // 結果画面のボタン
-  const replayBtn = document.getElementById('btn-replay');
-  if (replayBtn) {
-    replayBtn.addEventListener('click', () => {
-      startGame(getSampleFoodItems());
-    });
-  }
-
-  const newPhotoBtn = document.getElementById('btn-new-photo');
-  if (newPhotoBtn) {
-    newPhotoBtn.addEventListener('click', openCamera);
-  }
-
-  const backToStartBtn = document.getElementById('btn-back-to-start');
-  if (backToStartBtn) {
-    backToStartBtn.addEventListener('click', () => showScreen('start-screen'));
-  }
+  // 結果画面のボタンは showResults() 内で生成されるため、そちらで登録する
 });
 
 // グローバルに公開（game.jsから呼べるように）
 window.goToResults = goToResults;
+window.replayGame = replayGame;
 window.updateScoreDisplay = updateScoreDisplay;
 window.playSample = playSample;
 window.openCamera = openCamera;

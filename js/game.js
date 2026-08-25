@@ -6,7 +6,8 @@
 // ゲームのステート
 const state = {
   foodItems: [],
-  scores: {},
+  attempts: [],   // インデックスごとのドロップ試行回数
+  placed: [],     // インデックスごとの配置済みフラグ
   placedItems: 0,
   totalItems: 0,
   audioContext: null,
@@ -117,17 +118,20 @@ function calculateStars(attempts) {
 }
 
 export function getScore() {
-  if (state.foodItems.length === 0) return 0;
+  const total = state.foodItems.length;
+  if (total === 0) return 0;
+
   let earned = 0;
-  for (const item of state.foodItems) {
-    earned += calculateStars(state.scores[item.name] || 1);
+  for (let i = 0; i < total; i++) {
+    // 未配置の食材は0点。正解して初めて星が入る
+    if (state.placed[i]) earned += calculateStars(state.attempts[i]);
   }
-  return Math.round((earned / (state.foodItems.length * 3)) * 100);
+  return Math.round((earned / (total * 3)) * 100);
 }
 
 // ========== ドラッグ＆ドロップ ==========
 
-function setupDraggable(card, foodData) {
+function setupDraggable(card, foodData, index) {
   let isDragging = false;
   let offsetX = 0, offsetY = 0;
   let originalParent = null;
@@ -144,7 +148,7 @@ function setupDraggable(card, foodData) {
   }
 
   function onStart(e) {
-    if (card.classList.contains('placed')) return;
+    if (card.classList.contains('placed')) return false;
     initAudio();
 
     isDragging = true;
@@ -178,6 +182,7 @@ function setupDraggable(card, foodData) {
     card.style.boxShadow = '0 12px 28px rgba(0,0,0,0.25)';
     card.style.transition = 'transform 0.1s, box-shadow 0.1s';
     card.classList.add('dragging');
+    return true;
   }
 
   function onMove(e) {
@@ -218,8 +223,7 @@ function setupDraggable(card, foodData) {
 
     if (droppedZone) {
       const zoneCategory = parseInt(droppedZone.dataset.category, 10);
-      if (!state.scores[foodData.name]) state.scores[foodData.name] = 0;
-      state.scores[foodData.name]++;
+      state.attempts[index] = (state.attempts[index] || 0) + 1;
 
       if (zoneCategory === foodData.category) {
         // ✅ 正解！
@@ -265,6 +269,7 @@ function setupDraggable(card, foodData) {
           { transform: 'scale(1)' }
         ], { duration: 400, easing: 'ease-out' });
 
+        state.placed[index] = true;
         state.placedItems++;
 
         // スコア更新
@@ -318,16 +323,27 @@ function setupDraggable(card, foodData) {
   card.addEventListener('touchcancel', onEnd, { passive: false });
 
   // マウスイベント
-  card.addEventListener('mousedown', onStart);
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onEnd);
+  // document へのリスナーはドラッグ中だけ張る（張りっぱなしにするとゲームを
+  // 繰り返すたびにカード枚数ぶん蓄積してしまう）
+  function onMouseUp(e) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    onEnd(e);
+  }
+
+  card.addEventListener('mousedown', (e) => {
+    if (!onStart(e)) return;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
 }
 
 // ========== ゲーム初期化 ==========
 
 export function initGame(foodItems) {
   state.foodItems = foodItems;
-  state.scores = {};
+  state.attempts = new Array(foodItems.length).fill(0);
+  state.placed = new Array(foodItems.length).fill(false);
   state.placedItems = 0;
   state.totalItems = foodItems.length;
 
@@ -342,13 +358,19 @@ export function initGame(foodItems) {
     const card = document.createElement('div');
     card.className = 'food-card';
     card.style.animationDelay = `${i * 0.1}s`;
-    card.innerHTML = `
-      <div class="food-emoji">${food.emoji}</div>
-      <div class="food-name">${food.name}</div>
-    `;
     card.style.touchAction = 'none';
 
-    setupDraggable(card, food);
+    const emojiEl = document.createElement('div');
+    emojiEl.className = 'food-emoji';
+    emojiEl.textContent = food.emoji;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'food-name';
+    nameEl.textContent = food.name;
+
+    card.append(emojiEl, nameEl);
+
+    setupDraggable(card, food, i);
     container.appendChild(card);
   });
 }
@@ -368,7 +390,7 @@ export function showResults() {
   else if (score >= 50) { message = 'がんばったね！'; messageEmoji = '👍'; }
   else { message = 'もうちょっとがんばろう！'; messageEmoji = '💪'; }
 
-  let html = `
+  screen.innerHTML = `
     <div class="results-container">
       <div class="results-header">
         <div class="results-emoji">${messageEmoji}</div>
@@ -381,41 +403,64 @@ export function showResults() {
 
       <div class="results-items">
         <h3>📋 けっか</h3>
-  `;
-
-  state.foodItems.forEach(food => {
-    const attempts = state.scores[food.name] || 1;
-    const stars = calculateStars(attempts);
-    const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-    const zoneName = ZONES[food.category]?.name || '';
-
-    html += `
-      <div class="result-item">
-        <div class="result-item-emoji">${food.emoji}</div>
-        <div class="result-item-info">
-          <div class="result-item-name">${food.name} <span class="result-stars">${starStr}</span></div>
-          <div class="result-item-zone">→ ${zoneName}</div>
-          <div class="result-item-fact">💡 ${food.funFact}</div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
       </div>
 
       <div class="results-actions">
-        <button id="btn-replay" class="btn btn-primary" onclick="window.playSample()">🔄 もう一回あそぶ</button>
-        <button id="btn-new-photo" class="btn btn-secondary" onclick="window.openCamera()">📸 新しい写真をとる</button>
-        <button id="btn-back-to-start" class="btn btn-tertiary" onclick="window.showScreen('start-screen')">🏠 はじめにもどる</button>
+        <button id="btn-replay" class="btn btn-primary">🔄 もう一回あそぶ</button>
+        <button id="btn-new-photo" class="btn btn-secondary">📸 新しい写真をとる</button>
+        <button id="btn-back-to-start" class="btn btn-tertiary">🏠 はじめにもどる</button>
       </div>
     </div>
   `;
 
-  screen.innerHTML = html;
+  // 食材名や豆知識はモデルの出力なので innerHTML ではなく textContent で入れる
+  const itemsEl = screen.querySelector('.results-items');
+  state.foodItems.forEach((food, i) => {
+    const stars = state.placed[i] ? calculateStars(state.attempts[i]) : 0;
+    const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    const zoneName = ZONES[food.category]?.name || '';
+
+    const row = document.createElement('div');
+    row.className = 'result-item';
+
+    const emojiEl = document.createElement('div');
+    emojiEl.className = 'result-item-emoji';
+    emojiEl.textContent = food.emoji;
+
+    const infoEl = document.createElement('div');
+    infoEl.className = 'result-item-info';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'result-item-name';
+    nameEl.textContent = `${food.name} `;
+    const starEl = document.createElement('span');
+    starEl.className = 'result-stars';
+    starEl.textContent = starStr;
+    nameEl.appendChild(starEl);
+
+    const zoneEl = document.createElement('div');
+    zoneEl.className = 'result-item-zone';
+    zoneEl.textContent = `→ ${zoneName}`;
+
+    const factEl = document.createElement('div');
+    factEl.className = 'result-item-fact';
+    factEl.textContent = `💡 ${food.funFact}`;
+
+    infoEl.append(nameEl, zoneEl, factEl);
+    row.append(emojiEl, infoEl);
+    itemsEl.appendChild(row);
+  });
+
+  // ボタンはここで生成されるので、登録もここで行う
+  screen.querySelector('#btn-replay')
+    ?.addEventListener('click', () => window.replayGame?.());
+  screen.querySelector('#btn-new-photo')
+    ?.addEventListener('click', () => window.openCamera?.());
+  screen.querySelector('#btn-back-to-start')
+    ?.addEventListener('click', () => window.showScreen?.('start-screen'));
 
   // スコアカウントアップアニメーション
-  const scoreEl = document.getElementById('animated-score');
+  const scoreEl = screen.querySelector('#animated-score');
   if (scoreEl) {
     let current = 0;
     const interval = setInterval(() => {
@@ -430,7 +475,8 @@ export function showResults() {
 }
 
 export function resetGame() {
-  state.scores = {};
+  state.attempts = [];
+  state.placed = [];
   state.placedItems = 0;
   state.totalItems = 0;
   document.querySelectorAll('.zone-placed-items').forEach(el => el.innerHTML = '');
